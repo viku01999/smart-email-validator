@@ -38,4 +38,16 @@ public class ValidationDetail {
     @JoinColumn(name = "email_record_id", nullable = false)
     private EmailRecord emailRecord;
 
+    @Override
+    public String toString() {
+        return "ValidationDetail{" +
+                "id=" + id +
+                ", checkName='" + checkName + '\'' +
+                ", isPassed=" + isPassed +
+                ", message='" + message + '\'' +
+                ", impactScore=" + impactScore +
+                ", checkedAt=" + checkedAt +
+                '}';
+    }
+
 }

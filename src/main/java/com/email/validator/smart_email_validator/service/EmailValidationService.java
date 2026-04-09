@@ -1,9 +1,9 @@
 package com.email.validator.smart_email_validator.service;
 
 import com.email.validator.smart_email_validator.dto.EmailResponse;
+import com.email.validator.smart_email_validator.dto.ValidationDetailDto;
 import com.email.validator.smart_email_validator.entity.EmailRecord;
 import com.email.validator.smart_email_validator.entity.ValidationDetail;
-import com.email.validator.smart_email_validator.provider.DisposableDomainProvider;
 import com.email.validator.smart_email_validator.repository.EmailRecordRepository;
 import com.email.validator.smart_email_validator.strategy.EmailValidationStrategy;
 import com.email.validator.smart_email_validator.utils.EmailUtils;
@@ -49,10 +49,13 @@ public class EmailValidationService {
 
         boolean isValid = true;
         double score = 1.0;
+        boolean isDisposable = false;
+        boolean isSpam = false;
 
         for (EmailValidationStrategy strategy : emailValidationStrategies) {
             try {
                 ValidationDetail detail = strategy.validate(email);
+                System.out.println(detail.toString());
 
                 detail.setEmailRecord(emailRecord);
                 validationDetails.add(detail);
@@ -60,6 +63,11 @@ public class EmailValidationService {
                 if (!detail.getIsPassed()) {
                     isValid = false;
                     score -= detail.getImpactScore();
+                    if ("Disposable Check".equals(detail.getCheckName())) {
+                        isDisposable = true;
+                    } else {
+                        isSpam = true;
+                    }
                 }
 
             } catch (Exception e) {
@@ -81,6 +89,8 @@ public class EmailValidationService {
         if (score < 0) score = 0;
 
         emailRecord.setIsValid(isValid);
+        emailRecord.setIsSpam(isSpam);
+        emailRecord.setIsDisposable(isDisposable);
         emailRecord.setScore(score);
         emailRecord.setValidationDetails(validationDetails);
         emailRecord.setEmailStatus(StatusDecide.calculateStatus(score));
@@ -97,9 +107,26 @@ public class EmailValidationService {
         response.setEmail(record.getEmail());
         response.setDomain(record.getDomain());
         response.setIsValid(record.getIsValid());
+        response.setIsDisposable(record.getIsDisposable());
+        response.setIsSpam(record.getIsSpam());
         response.setScore(record.getScore());
+        response.setCreatedAt(record.getCreatedAt());
         response.setEmailStatus(record.getEmailStatus());
 
+        // Map ValidationDetail to DTO
+//        if (record.getValidationDetails() != null) {
+//            List<ValidationDetailDto> details = new ArrayList<>();
+//            for (ValidationDetail detail : record.getValidationDetails()) {
+//                ValidationDetailDto dto = new ValidationDetailDto();
+//                dto.setCheckName(detail.getCheckName());
+//                dto.setIsPassed(detail.getIsPassed());
+//                dto.setMessage(detail.getMessage());
+//                dto.setImpactScore(detail.getImpactScore());
+//                dto.setCheckedAt(detail.getCheckedAt());
+//                details.add(dto);
+//            }
+//            response.setDetails(details);
+//        }
         return response;
     }
 }
