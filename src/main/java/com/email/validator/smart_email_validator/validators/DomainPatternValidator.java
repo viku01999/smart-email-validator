@@ -3,7 +3,9 @@ package com.email.validator.smart_email_validator.validators;
 import com.email.validator.smart_email_validator.entity.ValidationDetail;
 import com.email.validator.smart_email_validator.strategy.EmailValidationStrategy;
 import com.email.validator.smart_email_validator.utils.EmailUtils;
+import org.springframework.stereotype.Component;
 
+@Component
 public class DomainPatternValidator extends BaseValidator implements EmailValidationStrategy {
 
     @Override
