@@ -8,6 +8,9 @@ import org.xbill.DNS.Lookup;
 import org.xbill.DNS.Record;
 import org.xbill.DNS.Type;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Component
 public class MxRecordValidator extends BaseValidator implements EmailValidationStrategy {
     @Override
@@ -26,11 +29,24 @@ public class MxRecordValidator extends BaseValidator implements EmailValidationS
                 hasMx ? 0.0 : 0.6);
     }
 
+    private final Map<String, Boolean> cache = new ConcurrentHashMap<>();
+
     private boolean hasMXRecord(String domain) {
+        return cache.computeIfAbsent(domain, d -> checkDNS(d));
+    }
+
+    private boolean checkDNS(String domain) {
         try {
-            Lookup lookup = new Lookup(domain, Type.MX);
-            Record[] records = lookup.run();
-            return records != null && records.length > 0;
+            Lookup mxLookup = new Lookup(domain, Type.MX);
+            Record[] mxRecords = mxLookup.run();
+
+            if (mxRecords != null && mxRecords.length > 0) return true;
+
+            Lookup aLookup = new Lookup(domain, Type.A);
+            Record[] aRecords = aLookup.run();
+
+            return aRecords != null && aRecords.length > 0;
+
         } catch (Exception e) {
             return false;
         }
